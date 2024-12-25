@@ -563,6 +563,51 @@ def calculate_ratio(width,height):
         ratio = 1./ratio
     return ratio
 
+def preprocess_image(image):
+    # Denoise the image using Non-Local Means Denoising
+    denoised = cv2.fastNlMeansDenoising(image, h=30)
+
+    # Apply Contrast Limited Adaptive Histogram Equalization (CLAHE) to enhance contrast
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    enhanced_contrast = clahe.apply(denoised)
+
+    # # Adaptive thresholding to binarize thin and thick text
+    # binarized_adaptive = cv2.adaptiveThreshold(enhanced_contrast, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+    # # # Global thresholding as a fallback
+    # _, binarized_global = cv2.threshold(enhanced_contrast, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    
+    # # Combine adaptive and global thresholding results
+    # binarized = cv2.bitwise_or(binarized_adaptive, binarized_global)
+
+    # Perform morphological operations to remove small noise and connect broken parts of the text
+    kernel = np.ones((2, 2), np.uint8)
+    binarized = cv2.morphologyEx(enhanced_contrast, cv2.MORPH_CLOSE, kernel)
+    
+    # # Further noise removal using morphological opening
+    # kernel_opening = np.ones((1, 1), np.uint8)
+    # binarized = cv2.morphologyEx(binarized, cv2.MORPH_OPEN, kernel_opening)
+    
+    # Edge enhancement using Laplacian filter to improve text clarity
+    # laplacian = cv2.Laplacian(binarized, cv2.CV_64F)
+    # abs_laplacian = np.absolute(laplacian)
+    # enhanced_edges = np.uint8(abs_laplacian)
+
+    # # Combine binarized result with enhanced edges
+    # preprocessed = cv2.bitwise_or(binarized, enhanced_edges)
+
+    # Visualize the original and preprocessed images
+    # cv2.imshow('Original Image', image)
+    # # cv2.imshow('Denoised Image', denoised)
+    # # cv2.imshow('Contrast Enhanced Image', enhanced_contrast)
+    # # cv2.imshow('Binarized Image (Adaptive and Global)', binarized)
+    # # cv2.imshow('Edge Enhanced Image', enhanced_edges)
+    # cv2.imshow('Final Preprocessed Image', binarized)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    return binarized
+
 def compute_ratio_and_resize(img,width,height,model_height):
     '''
     Calculate ratio and resize correctly for both horizontal text
@@ -611,6 +656,9 @@ def get_image_list(horizontal_list, free_list, img, model_height = 64, sort_outp
             pass
         else:
             crop_img,ratio = compute_ratio_and_resize(crop_img,width,height,model_height)
+            # apply processing
+            # crop_img = preprocess_image(crop_img)
+
             image_list.append( ( [[x_min,y_min],[x_max,y_min],[x_max,y_max],[x_min,y_max]] ,crop_img) )
             max_ratio_hori = max(ratio, max_ratio_hori)
 
