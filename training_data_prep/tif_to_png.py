@@ -63,7 +63,7 @@ def convert_tiff_to_png_recursive(input_dir, output_dir):
                 print(result)
 
 # Example usage
-input_directory = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/data_for_annotation"
-output_directory = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/data_for_annotation_png"
+input_directory = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/REAL"
+output_directory = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/REAL_PNG"
 
 convert_tiff_to_png_recursive(input_directory, output_directory)

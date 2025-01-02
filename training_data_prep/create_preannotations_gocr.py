@@ -58,10 +58,8 @@ def create_labelme_annotation(response, image_filename, img_size):
 
     return labelme_annotation
 
-def process_image(image_filename, image_dir, response_dir, output_dir):
-    image_filepath = os.path.join(image_dir, image_filename)
-    response_filepath = os.path.join(response_dir, f"{os.path.splitext(image_filename)[0]}.pkl")
-    output_filepath = os.path.join(output_dir, f"{os.path.splitext(image_filename)[0]}.json")
+def process_image(image_filepath, response_filepath):
+    output_filepath = f"{os.path.splitext(image_filepath)[0]}.json"
 
     if os.path.exists(response_filepath):
         with open(response_filepath, 'rb') as f:
@@ -72,31 +70,29 @@ def process_image(image_filename, image_dir, response_dir, output_dir):
             img_size = img.size
 
         # Generate LabelMe annotation
-        labelme_annotation = create_labelme_annotation(response, image_filename, img_size)
+        labelme_annotation = create_labelme_annotation(response, os.path.basename(image_filepath), img_size)
 
         # Save to a JSON file with UTF-8 encoding
         with open(output_filepath, 'w', encoding='utf-8') as f:
             json.dump(labelme_annotation, f, ensure_ascii=False, indent=4)
-        return f"Saved LabelMe annotation for {image_filename}"
-    return f"Response file not found for {image_filename}"
+        return f"Saved LabelMe annotation for {image_filepath}"
+    return f"Response file not found for {image_filepath}"
 
-def convert_responses_to_labelme(image_dir, response_dir, output_dir):
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-
-    image_filenames = [f for f in os.listdir(image_dir) if f.endswith(('.jpg', '.jpeg', '.png'))]
-    
+def convert_responses_to_labelme(image_dir, response_dir):
     results = []
-    for image_filename in tqdm(image_filenames, desc='Processing images', unit='image'):
-        result = process_image(image_filename, image_dir, response_dir, output_dir)
-        results.append(result)
+    for root, _, files in os.walk(image_dir):
+        image_files = [f for f in files if f.endswith(('.jpg', '.jpeg', '.png'))]
+        for image_file in tqdm(image_files, desc=f'Processing images in {root}', unit='image'):
+            image_filepath = os.path.join(root, image_file)
+            response_filepath = image_filepath.replace('.png', '.pkl')
+            # response_filepath = os.path.join(response_dir, f"{os.path.splitext(image_file)[0]}.pkl")
+            result = process_image(image_filepath, response_filepath)
+            results.append(result)
 
     for result in results:
         print(result)
 
-
 if __name__ == "__main__":
-    image_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/data_for_annotation_png_5_percent"  
-    response_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/5_percent_gocr_out_pkl"  
-    output_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/5_percent_labelme_annotations" 
-    convert_responses_to_labelme(image_dir, response_dir, output_dir)
+    image_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/REAL_PNG"  
+    response_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/REAL_PNG"  
+    convert_responses_to_labelme(image_dir, response_dir)
