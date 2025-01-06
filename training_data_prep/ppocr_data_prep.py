@@ -67,11 +67,12 @@ def transform_and_crop_polygon(image_info):
     max_y = int(np.max(transformed_points[:, 1]))
 
     # Apply dilation
-    dilation = int(0.02 * (max_y - min_y))
-    min_x = max(0, min_x - dilation)
-    min_y = max(0, min_y - dilation)
-    max_x = min(warped.shape[1], max_x + dilation)
-    max_y = min(warped.shape[0], max_y + dilation)
+    dilation_width = int(0.05 * (max_x - min_x))
+    dilation_height = int(0.01 * (max_y - min_y))
+    min_x = max(0, min_x - dilation_width)
+    min_y = max(0, min_y - dilation_height)
+    max_x = min(warped.shape[1], max_x + dilation_width)
+    max_y = min(warped.shape[0], max_y + dilation_height)
 
     # Ensure coordinates are within the image boundaries
     min_x = max(0, min_x)
@@ -82,7 +83,7 @@ def transform_and_crop_polygon(image_info):
     # Crop the transformed image
     cropped_img = warped[min_y:max_y, min_x:max_x]
     
-    if cropped_img.size == 0 or cropped_img.shape[1] < 20:
+    if cropped_img.size == 0 or cropped_img.shape[1] < 50:
         return
     
     # Save the cropped and straightened image
