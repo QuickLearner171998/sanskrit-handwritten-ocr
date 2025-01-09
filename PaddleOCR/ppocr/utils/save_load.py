@@ -26,13 +26,9 @@ import paddle
 from ppocr.utils.logging import get_logger
 from ppocr.utils.network import maybe_download_params
 
-try:
-    import encryption  # Attempt to import the encryption module for AIStudio's encryption model
 
-    encrypted = encryption.is_encryption_needed()
-except ImportError:
-    get_logger().warning("Skipping import of the encryption module.")
-    encrypted = False  # Encryption is not needed if the module cannot be imported
+get_logger().warning("Skipping import of the encryption module.")
+encrypted = False  # Encryption is not needed if the module cannot be imported
 
 __all__ = ["load_model"]
 

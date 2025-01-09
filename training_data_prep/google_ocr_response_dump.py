@@ -31,18 +31,19 @@ def process_file(file_path):
     return detect_text(file_path)
 
 def main():
-    input_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/REAL_PNG"
+    input_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/cropped_png/"
 
     # Collect all files to process
     files_to_process = []
     for root, _, files in walk(input_dir):
+        if 'Mysore' in root:  # Skip directories containing 'Mysore'
+            continue
         for file in files:
             if file.endswith('.jpg') or file.endswith('.jpeg') or file.endswith('.png') or file.endswith('.tiff') or file.endswith('.tif'):
                 files_to_process.append(join(root, file))
 
     # Use multiprocessing with a pool of workers
-    n_workers = 64
-    with Pool(processes=n_workers) as pool:
+    with Pool(processes=cpu_count()) as pool:
         results = list(tqdm(pool.imap(process_file, files_to_process), total=len(files_to_process)))
 
     # Print results

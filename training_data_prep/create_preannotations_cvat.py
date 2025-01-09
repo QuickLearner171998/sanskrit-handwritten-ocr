@@ -76,7 +76,8 @@ def convert_responses_to_cvat(image_dir):
     # Assign IDs and create input data for multiprocessing
     for image_id, image_filepath in enumerate(image_files):
         response_filepath = image_filepath.replace('.png', '.pkl')
-        input_data.append((image_id, image_filepath, response_filepath))
+        if os.path.exists(response_filepath):
+            input_data.append((image_id, image_filepath, response_filepath))
 
     # Use multiprocessing to process images
     with Pool(cpu_count()) as pool:
@@ -138,5 +139,7 @@ def convert_responses_to_cvat(image_dir):
     print(f"Saved CVAT annotation to {output_filepath}")
 
 if __name__ == "__main__":
-    image_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/raw_form/IITJ/data_for_annotation_png_5_percent_cvat"  
-    convert_responses_to_cvat(image_dir)
+    image_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/cropped_png_batched"
+    
+    for batch_name in os.listdir(image_dir):
+        convert_responses_to_cvat(os.path.join(image_dir, batch_name))

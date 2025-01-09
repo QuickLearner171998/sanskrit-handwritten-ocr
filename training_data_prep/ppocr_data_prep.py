@@ -190,18 +190,25 @@ def split_data(annotations, output_dir):
     print(f"Train annotations written to {train_gt_path}")
     print(f"Validation annotations written to {val_gt_path}")
 
-def main(image_dir, annotation_path, output_dir):
-    os.makedirs(output_dir, exist_ok=True)
+def main(input_dir, output_dir):
+    batch_dirs = [os.path.join(input_dir, batch_dir) for batch_dir in os.listdir(input_dir) if os.path.isdir(os.path.join(input_dir, batch_dir))]
+    all_annotations = []
 
     print("Processing annotations and cropping word images...")
-    annotations = process_annotations(image_dir, annotation_path, output_dir)
+    for batch_dir in batch_dirs:
+        image_dir = batch_dir
+        xml_path = os.path.join(batch_dir, 'annotations.xml')
 
+        if os.path.exists(image_dir) and os.path.exists(xml_path):
+            annotations = process_annotations(image_dir, xml_path, output_dir)
+            all_annotations.extend(annotations)
+        else:
+            print(f"Skipping {batch_dir}: image directory or annotations.xml not found.")
+    
     print("Splitting data into training and validation sets and saving annotations...")
-    split_data(annotations, output_dir)
+    split_data(all_annotations, output_dir)
 
-if __name__:
-    image_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/raw_form/IITJ/data_for_annotation_png_5_percent_cvat"
-    annotation_path = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/raw_form/IITJ/data_for_annotation_png_5_percent_cvat/annotations.xml"
-    output_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/ppocr_format/data_for_annotation_png_5_percent_cvat"
-
-    main(image_dir, annotation_path, output_dir)
+if __name__ == '__main__':
+    input_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/cropped_png_batched"
+    output_dir = "/ihub/homedirs/am_cse/pramay/work/training_1/ppocr_format"
+    main(input_dir, output_dir)

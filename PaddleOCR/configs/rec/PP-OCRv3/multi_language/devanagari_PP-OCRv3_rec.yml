@@ -77,11 +77,11 @@ Metric:
 Train:
   dataset:
     name: SimpleDataSet
-    data_dir: 
+    data_dir: /home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/ppocr_format/data_for_annotation_png_5_percent_cvat/
     ext_op_transform_idx: 1
     label_file_list:
-    - /home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/ppocr_format/data_for_annotation_png_5_percent_cvat/train_data/rec/rec_gt_train.txt
-    - /home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/SYNTH/train_val/train_gt.txt
+    - train_data/rec/rec_gt_train.txt
+    - train_data/rec/train_gt_synth.txt
     ratio_list:
     - 0.7
     - 0.3
@@ -112,9 +112,9 @@ Train:
 Eval:
   dataset:
     name: SimpleDataSet
-    data_dir: ./train_data
+    data_dir: /home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/ppocr_format/data_for_annotation_png_5_percent_cvat/
     label_file_list:
-    - /home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/ppocr_format/data_for_annotation_png_5_percent_cvat/train_data/rec/rec_gt_val.txt
+    - train_data/rec/rec_gt_val.txt
     # ratio_list:
     # - 0.7
     # - 0.3

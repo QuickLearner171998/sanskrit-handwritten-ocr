@@ -59,6 +59,8 @@ class SimpleDataSet(Dataset):
             file_list = [file_list]
         data_lines = []
         for idx, file in enumerate(file_list):
+            if not os.path.exists(file):
+                file = os.path.join(self.data_dir, file)
             with open(file, "rb") as f:
                 lines = f.readlines()
                 if self.mode == "train" or ratio_list[idx] < 1.0:
