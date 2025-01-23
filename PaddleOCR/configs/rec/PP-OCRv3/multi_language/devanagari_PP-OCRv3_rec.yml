@@ -1,24 +1,26 @@
 Global:
   debug: false
   use_gpu: true
-  epoch_num: 500
+  epoch_num: 2000
   log_smooth_window: 20
-  print_batch_step: 10
-  save_model_dir: ./output/v3_devanagari_mobile
+  print_batch_step: 20
+  save_model_dir: /kaggle/working/output/v3_devanagari_mobile
   save_epoch_step: 3
-  eval_batch_step: [0, 2000]
+  eval_batch_step: [500, 2000]
   cal_metric_during_train: true
+  calc_epoch_interval: 50
   pretrained_model:
   checkpoints:
   save_inference_dir:
   use_visualdl: false
   infer_img: doc/imgs_words/ch/word_1.jpg
-  character_dict_path: ppocr/utils/dict/devanagari_dict.txt
-  max_text_length: &max_text_length 25
+  character_dict_path: /kaggle/input/ocr-repo/PaddleOCR/ppocr/utils/dict/devanagari_dict.txt
+  max_text_length: &max_text_length 50
   infer_mode: false
   use_space_char: true
   distributed: true
-  save_res_path: ./output/rec/predicts_ppocrv3_devanagari.txt
+  use_wandb: true
+  save_res_path: /kaggle/working/output/rec/predicts_ppocrv3_devanagari.txt
 
 
 Optimizer:
@@ -77,14 +79,14 @@ Metric:
 Train:
   dataset:
     name: SimpleDataSet
-    data_dir: /home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/ppocr_format/data_for_annotation_png_5_percent_cvat/
+    data_dir: /kaggle/input/cropped-train-data/
     ext_op_transform_idx: 1
     label_file_list:
-    - train_data/rec/rec_gt_train.txt
+    # - train_data/rec/rec_gt_train.txt
     - train_data/rec/train_gt_synth.txt
-    ratio_list:
-    - 0.7
-    - 0.3
+    # ratio_list:
+    # - 0.7
+    # - 0.3
     transforms:
     - DecodeImage:
         img_mode: BGR
@@ -112,9 +114,9 @@ Train:
 Eval:
   dataset:
     name: SimpleDataSet
-    data_dir: /home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/Training_Datasets/exp1/ppocr_format/data_for_annotation_png_5_percent_cvat/
+    data_dir: /kaggle/input/cropped-train-data/
     label_file_list:
-    - train_data/rec/rec_gt_val.txt
+    - train_data/rec/val_gt_synth.txt
     # ratio_list:
     # - 0.7
     # - 0.3

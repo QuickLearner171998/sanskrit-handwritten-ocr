@@ -589,8 +589,8 @@ def train(
                     global_step=global_step,
                 )
 
-            if log_writer is not None:
-                log_writer.log_model(is_best=False, prefix="latest")
+                if log_writer is not None:
+                    log_writer.log_model(is_best=False, prefix="latest")
 
         if dist.get_rank() == 0 and epoch > 0 and epoch % save_epoch_step == 0:
             prefix = "iter_epoch_{}".format(epoch)
@@ -618,10 +618,10 @@ def train(
             #     global_step=global_step,
             #     done_flag=epoch == config["Global"]["epoch_num"],
             # )
-            if log_writer is not None:
-                log_writer.log_model(
-                    is_best=False, prefix="iter_epoch_{}".format(epoch)
-                )
+            # if log_writer is not None:
+            #     log_writer.log_model(
+            #         is_best=False, prefix="iter_epoch_{}".format(epoch)
+            #     )
 
     best_str = "best metric, {}".format(
         ", ".join(["{}: {}".format(k, v) for k, v in best_model_dict.items()])
