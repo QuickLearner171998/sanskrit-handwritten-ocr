@@ -114,3 +114,4 @@ ENV/
 *.tif
 
 test_*
+.git*

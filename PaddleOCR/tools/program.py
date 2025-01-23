@@ -598,24 +598,24 @@ def train(
                 model_info = {"epoch": epoch, "metric": best_model_dict}
             else:
                 model_info = None
-            save_model(
-                model,
-                optimizer,
-                (
-                    os.path.join(save_model_dir, prefix)
-                    if uniform_output_enabled
-                    else save_model_dir
-                ),
-                logger,
-                config,
-                is_best=False,
-                prefix=prefix,
-                save_model_info=model_info,
-                best_model_dict=best_model_dict,
-                epoch=epoch,
-                global_step=global_step,
-                done_flag=epoch == config["Global"]["epoch_num"],
-            )
+            # save_model(
+            #     model,
+            #     optimizer,
+            #     (
+            #         os.path.join(save_model_dir, prefix)
+            #         if uniform_output_enabled
+            #         else save_model_dir
+            #     ),
+            #     logger,
+            #     config,
+            #     is_best=False,
+            #     prefix=prefix,
+            #     save_model_info=model_info,
+            #     best_model_dict=best_model_dict,
+            #     epoch=epoch,
+            #     global_step=global_step,
+            #     done_flag=epoch == config["Global"]["epoch_num"],
+            # )
             if log_writer is not None:
                 log_writer.log_model(
                     is_best=False, prefix="iter_epoch_{}".format(epoch)
