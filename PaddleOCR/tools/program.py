@@ -569,23 +569,25 @@ def train(
                 model_info = {"epoch": epoch, "metric": best_model_dict}
             else:
                 model_info = None
-            save_model(
-                model,
-                optimizer,
-                (
-                    os.path.join(save_model_dir, prefix)
-                    if uniform_output_enabled
-                    else save_model_dir
-                ),
-                logger,
-                config,
-                is_best=False,
-                prefix=prefix,
-                save_model_info=model_info,
-                best_model_dict=best_model_dict,
-                epoch=epoch,
-                global_step=global_step,
-            )
+            # save model only if acc > 0.5
+            if best_model_dict[main_indicator] > 0.5:
+                save_model(
+                    model,
+                    optimizer,
+                    (
+                        os.path.join(save_model_dir, prefix)
+                        if uniform_output_enabled
+                        else save_model_dir
+                    ),
+                    logger,
+                    config,
+                    is_best=False,
+                    prefix=prefix,
+                    save_model_info=model_info,
+                    best_model_dict=best_model_dict,
+                    epoch=epoch,
+                    global_step=global_step,
+                )
 
             if log_writer is not None:
                 log_writer.log_model(is_best=False, prefix="latest")
