@@ -115,3 +115,6 @@ ENV/
 
 test_*
 .git*
+*.zip
+synthetic_data_generator/data_preparation/synthetic/sanskritdoc.txt
+synthetic_data_generator/label_data/annot_synthetic.txt
