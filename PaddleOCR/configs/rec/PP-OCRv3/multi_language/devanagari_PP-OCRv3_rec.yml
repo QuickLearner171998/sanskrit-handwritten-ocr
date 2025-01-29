@@ -4,7 +4,7 @@ Global:
   epoch_num: 2000
   log_smooth_window: 20
   print_batch_step: 20
-  save_model_dir: /kaggle/working/output/v3_devanagari_mobile
+  save_model_dir: /ihub/homedirs/am_cse/pramay/work/models/v3_devanagari_mobile_synth_100
   save_epoch_step: 3
   eval_batch_step: [500, 2000]
   cal_metric_during_train: true
@@ -13,14 +13,12 @@ Global:
   checkpoints:
   save_inference_dir:
   use_visualdl: false
-  infer_img: doc/imgs_words/ch/word_1.jpg
-  character_dict_path: /kaggle/input/ocr-repo/PaddleOCR/ppocr/utils/dict/devanagari_dict.txt
-  max_text_length: &max_text_length 50
+  character_dict_path: ppocr/utils/dict/devanagari_dict.txt
+  max_text_length: &max_text_length 100
   infer_mode: false
   use_space_char: true
   distributed: true
   use_wandb: true
-  save_res_path: /kaggle/working/output/rec/predicts_ppocrv3_devanagari.txt
 
 
 Optimizer:
@@ -79,11 +77,11 @@ Metric:
 Train:
   dataset:
     name: SimpleDataSet
-    data_dir: /kaggle/input/cropped-train-data/
+    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/synth/large_set_100/
     ext_op_transform_idx: 1
     label_file_list:
     # - train_data/rec/rec_gt_train.txt
-    - train_data/rec/train_gt_synth.txt
+    - train_data/train_gt_synth.txt
     # ratio_list:
     # - 0.7
     # - 0.3
@@ -109,15 +107,15 @@ Train:
         - valid_ratio
   loader:
     shuffle: true
-    batch_size_per_card: 128
+    batch_size_per_card: 1024
     drop_last: true
-    num_workers: 4
+    num_workers: 32
 Eval:
   dataset:
     name: SimpleDataSet
-    data_dir: /kaggle/input/cropped-train-data/
+    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/synth/large_set_100/
     label_file_list:
-    - train_data/rec/val_gt_synth.txt
+    - train_data/val_gt_synth.txt
     # ratio_list:
     # - 0.7
     # - 0.3
@@ -138,5 +136,5 @@ Eval:
   loader:
     shuffle: false
     drop_last: false
-    batch_size_per_card: 128
-    num_workers: 4
+    batch_size_per_card: 1024
+    num_workers: 32
