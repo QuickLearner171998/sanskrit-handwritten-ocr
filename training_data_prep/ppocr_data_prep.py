@@ -54,7 +54,7 @@ def warp_image(image, points):
 
 def transform_and_crop_polygon(image_info):
     """Transform polygon points using the homography matrix, crop the image, and apply dilation."""
-    warped, M, points, output_path = image_info   
+    warped, M, points, output_path, text_value = image_info   
 
     # Transform the points
     points = np.array(points, dtype="float32")
@@ -89,6 +89,11 @@ def transform_and_crop_polygon(image_info):
     # Save the cropped and straightened image
     cropped_image = Image.fromarray(cropped_img)
     cropped_image.save(output_path)
+
+    # Save the text value in a corresponding txt file
+    txt_path = os.path.splitext(output_path)[0] + '.txt'
+    with open(txt_path, 'w', encoding='utf-8') as f:
+        f.write(text_value)
 
     return output_path
 
@@ -128,7 +133,7 @@ def process_image(image_info):
                 points = [(int(float(x)), int(float(y))) for x, y in [point.split(',') for point in polygon.get('points').split(';')]]
                 # Generate output filename for cropped word image
                 output_filename = os.path.join(all_crops_dir, f'{image_name}_{crop_count:04d}.jpg')
-                if transform_and_crop_polygon((warped, M, points, output_filename)):
+                if transform_and_crop_polygon((warped, M, points, output_filename, text_value)):
                     annotations.append((output_filename, text_value))
                     crop_count += 1
 
@@ -171,8 +176,13 @@ def split_data(annotations, output_dir):
 
     with open(train_gt_path, 'w', encoding='utf-8') as train_f:
         for image_path, label in train_data:
-            # Copy the file to the train directory
+            # Copy the image file to the train directory
             shutil.copy(image_path, train_dir)
+            # Copy the corresponding text file
+            txt_path = os.path.splitext(image_path)[0] + '.txt'
+            txt_dest = os.path.join(train_dir, os.path.basename(txt_path))
+            shutil.copy(txt_path, txt_dest)
+            
             cos_file_path = os.path.join('train_data', 'rec', 'train', os.path.basename(image_path))
             train_f.write(f'{cos_file_path}\t{label}\n')
 
@@ -180,8 +190,13 @@ def split_data(annotations, output_dir):
 
     with open(val_gt_path, 'w', encoding='utf-8') as val_f:
         for image_path, label in val_data:
-            # Copy the file to the validation directory
+            # Copy the image file to the validation directory
             shutil.copy(image_path, val_dir)
+            # Copy the corresponding text file
+            txt_path = os.path.splitext(image_path)[0] + '.txt'
+            txt_dest = os.path.join(val_dir, os.path.basename(txt_path))
+            shutil.copy(txt_path, txt_dest)
+            
             cos_file_path = os.path.join('train_data', 'rec', 'val', os.path.basename(image_path))
             val_f.write(f'{cos_file_path}\t{label}\n')
             
@@ -192,6 +207,9 @@ def split_data(annotations, output_dir):
 
 def main(input_dir, output_dir):
     batch_dirs = [os.path.join(input_dir, batch_dir) for batch_dir in os.listdir(input_dir) if os.path.isdir(os.path.join(input_dir, batch_dir))]
+    
+    if len(batch_dirs)==0 or 'batch' not in batch_dirs[0]:
+        batch_dirs = [input_dir]
     all_annotations = []
 
     print("Processing annotations and cropping word images...")
@@ -209,6 +227,6 @@ def main(input_dir, output_dir):
     split_data(all_annotations, output_dir)
 
 if __name__ == '__main__':
-    input_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/cropped_png_batched"
-    output_dir = "/ihub/homedirs/am_cse/pramay/work/training_1/ppocr_format"
+    input_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Data_extended_PNG"
+    output_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Data_extended_PNG_ppocr_format"
     main(input_dir, output_dir)

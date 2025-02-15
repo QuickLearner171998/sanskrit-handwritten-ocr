@@ -40,7 +40,7 @@ def process_file(args):
     except Exception as e:
         return f"Error processing {src_path}: {e}"
 
-def sample_and_process_images(src_dir, dest_dir, percentage=5):
+def sample_and_process_images(src_dir, dest_dir, percentage=100):
     """
     Sample images, resize them, and convert them to PNG.
     """
@@ -78,8 +78,8 @@ def sample_and_process_images(src_dir, dest_dir, percentage=5):
 
 # Example usage
 if __name__ == "__main__":
-    source_directory = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Dataset/REAL"
-    destination_directory = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/data_for_annotation_png_5_percent"
+    source_directory = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Data_extended"
+    destination_directory = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Data_extended_PNG"
     
     print("Sampling, resizing, and converting images...")
     sample_and_process_images(source_directory, destination_directory)

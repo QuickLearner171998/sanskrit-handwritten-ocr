@@ -5,6 +5,7 @@ from PIL import Image
 from lxml import etree as ET
 from multiprocessing import Pool, cpu_count
 from datetime import datetime
+from collections import defaultdict
 
 def get_vertices(bounding_box):
     return [[vertex.x, vertex.y] for vertex in bounding_box.vertices]
@@ -32,6 +33,48 @@ def create_cvat_image_annotation(image_id, image_filename, img_size, shapes):
 
     return image_element
 
+def create_text_file(text_blocks, output_filepath):
+    """
+    Creates a text file maintaining relative positioning of text blocks.
+    Text blocks should be a list of dictionaries with 'text' and 'position' (y, x).
+    """
+    if not text_blocks:
+        return
+        
+    # Sort blocks by vertical position first, then horizontal
+    text_blocks.sort(key=lambda x: (x['position'][0], x['position'][1]))
+    
+    # Group text blocks by their vertical position (rounded to help group nearby lines)
+    lines = defaultdict(list)
+    current_y = None
+    y_threshold = 10  # Threshold for considering text to be on the same line
+    
+    for block in text_blocks:
+        y_pos = block['position'][0]
+        
+        # If this is the first block or significantly different from current y
+        if current_y is None or abs(y_pos - current_y) > y_threshold:
+            current_y = y_pos
+            
+        # Add text to the appropriate line
+        lines[current_y].append(block)
+    
+    # Sort each line horizontally
+    for y in lines:
+        lines[y].sort(key=lambda x: x['position'][1])
+    
+    # Write to file
+    with open(output_filepath, 'w', encoding='utf-8') as f:
+        # Process lines in vertical order
+        for y in sorted(lines.keys()):
+            line_text = ' '.join(block['text'] for block in lines[y])
+            f.write(line_text + '\n')
+            
+            # Add an extra newline if there's a significant gap to the next line
+            next_lines = [ny for ny in lines.keys() if ny > y]
+            if next_lines and min(next_lines) - y > y_threshold * 2:
+                f.write('\n')
+
 def process_image(args):
     image_id, image_filepath, response_filepath = args
     results = []
@@ -43,6 +86,8 @@ def process_image(args):
             img_size = img.size
 
         shapes = []
+        text_blocks = []
+        
         if response.full_text_annotation is not None:
             for page in response.full_text_annotation.pages:
                 for block in page.blocks:
@@ -57,9 +102,24 @@ def process_image(args):
                             word_text = ''.join([symbol.text for symbol in word.symbols])
                             word_points = get_vertices(word.bounding_box)
                             shapes.append(('text', word_points, word_text))
+                            
+                            # Calculate center position for relative positioning
+                            vertices = word_points
+                            y_center = sum(v[1] for v in vertices) / len(vertices)
+                            x_center = sum(v[0] for v in vertices) / len(vertices)
+                            
+                            text_blocks.append({
+                                'text': word_text,
+                                'position': (y_center, x_center)
+                            })
 
+        # Create CVAT annotation
         image_element = create_cvat_image_annotation(image_id, os.path.basename(image_filepath), img_size, shapes)
         results.append((image_id, ET.tostring(image_element, pretty_print=True).decode()))
+        
+        # Create text file
+        output_txt_filepath = image_filepath.replace('.png', '.txt')
+        create_text_file(text_blocks, output_txt_filepath)
 
     return results
 
@@ -139,7 +199,13 @@ def convert_responses_to_cvat(image_dir):
     print(f"Saved CVAT annotation to {output_filepath}")
 
 if __name__ == "__main__":
-    image_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/cropped_png_batched"
+    image_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Data_extended_PNG"
     
-    for batch_name in os.listdir(image_dir):
-        convert_responses_to_cvat(os.path.join(image_dir, batch_name))
+    batch_mode = False #True
+    
+    if batch_mode:
+        for batch_name in os.listdir(image_dir):
+            convert_responses_to_cvat(os.path.join(image_dir, batch_name))
+            
+    else:
+        convert_responses_to_cvat(image_dir)

@@ -31,7 +31,7 @@ def process_file(file_path):
     return detect_text(file_path)
 
 def main():
-    input_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/cropped_png/"
+    input_dir = "/home/pramay/myStuff/ai_apps/IITJodhpur/work/Data_extended_PNG"
 
     # Collect all files to process
     files_to_process = []
