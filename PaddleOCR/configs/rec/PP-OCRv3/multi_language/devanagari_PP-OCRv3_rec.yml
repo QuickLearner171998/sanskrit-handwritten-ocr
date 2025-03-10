@@ -77,14 +77,14 @@ Metric:
 Train:
   dataset:
     name: SimpleDataSet
-    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/
+    data_dir:
     ext_op_transform_idx: 1
     label_file_list:
-      - synth/large_set_100/train_data/train_gt_synth.txt
-      - real_training/train_data/rec_gt_train.txt
+      - /ihub/homedirs/am_cse/pramay/work/Dataset/synth/large_set_100/train_data/train_gt_synth.txt
+      - /ihub/homedirs/am_cse/pramay/work/Dataset/real_training_v1/train_data/rec_gt_train.txt
     ratio_list:
-      - 0.2
-      - 0.8
+      - 1
+      - 1
     transforms:
     - DecodeImage:
         img_mode: BGR
@@ -113,13 +113,13 @@ Train:
 Eval:
   dataset:
     name: SimpleDataSet
-    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/
+    data_dir: 
     label_file_list:
-      - synth/large_set_100/train_data/val_gt_synth.txt
-      - real_training/train_data/rec_gt_val.txt
+      - /ihub/homedirs/am_cse/pramay/work/Dataset/synth/large_set_100/train_data/val_gt_synth.txt
+      - /ihub/homedirs/am_cse/pramay/work/Dataset/real_training_v1/train_data/rec_gt_val.txt
     ratio_list:
-      - 0.2
-      - 0.8
+      - 1
+      - 1
     transforms:
     - DecodeImage:
         img_mode: BGR

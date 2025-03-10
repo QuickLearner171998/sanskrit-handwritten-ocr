@@ -43,6 +43,8 @@ class SimpleDataSet(Dataset):
             len(ratio_list) == data_source_num
         ), "The length of ratio_list should be the same as the file_list."
         self.data_dir = dataset_config["data_dir"]
+        if self.data_dir is None:
+            self.data_dir = ""
         self.do_shuffle = loader_config["shuffle"]
         self.seed = seed
         logger.info("Initialize indexs of datasets:%s" % label_file_list)
@@ -57,7 +59,14 @@ class SimpleDataSet(Dataset):
     def get_image_info_list(self, file_list, ratio_list):
         if isinstance(file_list, str):
             file_list = [file_list]
-        data_lines = []
+        
+        all_data_lines = []
+
+        # Temporarily store lines and their respective counts
+        file_lines = []
+        max_lines = 0
+
+        # Read the lines from each file, apply ratio, and find max line count
         for idx, file in enumerate(file_list):
             if not os.path.exists(file):
                 file = os.path.join(self.data_dir, file)
@@ -66,8 +75,20 @@ class SimpleDataSet(Dataset):
                 if self.mode == "train" or ratio_list[idx] < 1.0:
                     random.seed(self.seed)
                     lines = random.sample(lines, round(len(lines) * ratio_list[idx]))
-                data_lines.extend(lines)
-        return data_lines
+                file_lines.append(lines)
+                if len(lines) > max_lines:
+                    max_lines = len(lines)
+
+        # Upsample the lines in files with fewer samples than max_lines
+        for lines in file_lines:
+            if len(lines) < max_lines:
+                upsampled_lines = lines * (max_lines // len(lines)) + lines[:max_lines % len(lines)]
+                all_data_lines.extend(upsampled_lines)
+                self.logger.info(f"Upsampling \nBefore: {len(lines)} After: {len(upsampled_lines)}")
+            else:
+                all_data_lines.extend(lines)
+
+        return all_data_lines
 
     def shuffle_data_random(self):
         random.seed(self.seed)
@@ -98,17 +119,15 @@ class SimpleDataSet(Dataset):
             data_line = self.data_lines[file_idx]
             data_line = data_line.decode("utf-8")
             substr = data_line.strip("\n").split(self.delimiter)
-            
-            if len(substr) < 2:
-                print(substr)
-                continue
             file_name = substr[0]
             file_name = self._try_parse_filename_list(file_name)
             label = substr[1]
             img_path = os.path.join(self.data_dir, file_name)
             data = {"img_path": img_path, "label": label}
+
             if not os.path.exists(img_path):
-                continue
+                raise FileNotFoundError(f"File {img_path} does not exist!")
+
             with open(data["img_path"], "rb") as f:
                 img = f.read()
                 data["image"] = img
@@ -123,27 +142,29 @@ class SimpleDataSet(Dataset):
         return ext_data
 
     def __getitem__(self, idx):
+        if idx >= len(self.data_idx_order_list):
+            idx = idx % len(self.data_idx_order_list)  # Upsampling by cycling through the dataset
+        
         file_idx = self.data_idx_order_list[idx]
         data_line = self.data_lines[file_idx]
         try:
             data_line = data_line.decode("utf-8")
             substr = data_line.strip("\n").split(self.delimiter)
-            
-            if len(substr) < 2:
-                print(substr)
-                outs = None
-                
+
             file_name = substr[0]
             file_name = self._try_parse_filename_list(file_name)
             label = substr[1]
-            
+
             img_path = os.path.join(self.data_dir, file_name)
             data = {"img_path": img_path, "label": label}
+
             if not os.path.exists(img_path):
                 raise Exception("{} does not exist!".format(img_path))
+
             with open(data["img_path"], "rb") as f:
                 img = f.read()
                 data["image"] = img
+
             data["ext_data"] = self.get_ext_data()
             data["filename"] = data["img_path"]
             outs = transform(data, self.ops)
