@@ -3,18 +3,18 @@ Global:
   use_gpu: true
   epoch_num: 2000
   log_smooth_window: 20
-  print_batch_step: 20
-  save_model_dir: /ihub/homedirs/am_cse/pramay/work/models/v3_devanagari_mobile_synth_100
+  print_batch_step: 5
+  save_model_dir: /ihub/homedirs/am_cse/pramay/work/models/v3_devanagari_synth_75_with_real_data
   save_epoch_step: 3
-  eval_batch_step: [500, 2000]
+  eval_batch_step: [500, 1000]
   cal_metric_during_train: true
-  calc_epoch_interval: 50
-  pretrained_model:
+  calc_epoch_interval: 100
+  pretrained_model: /ihub/homedirs/am_cse/pramay/work/models/v3_devanagari_synth_75/best_accuracy
   checkpoints:
   save_inference_dir:
   use_visualdl: false
   character_dict_path: ppocr/utils/dict/devanagari_dict.txt
-  max_text_length: &max_text_length 100
+  max_text_length: &max_text_length 75
   infer_mode: false
   use_space_char: true
   distributed: true
@@ -77,14 +77,14 @@ Metric:
 Train:
   dataset:
     name: SimpleDataSet
-    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/synth/large_set_100/
+    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/
     ext_op_transform_idx: 1
     label_file_list:
-    # - train_data/rec/rec_gt_train.txt
-    - train_data/train_gt_synth.txt
-    # ratio_list:
-    # - 0.7
-    # - 0.3
+      - synth/large_set_100/train_data/train_gt_synth.txt
+      - real_training/train_data/rec_gt_train.txt
+    ratio_list:
+      - 0.2
+      - 0.8
     transforms:
     - DecodeImage:
         img_mode: BGR
@@ -107,18 +107,19 @@ Train:
         - valid_ratio
   loader:
     shuffle: true
-    batch_size_per_card: 1024
+    batch_size_per_card: 768
     drop_last: true
-    num_workers: 32
+    num_workers: 64
 Eval:
   dataset:
     name: SimpleDataSet
-    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/synth/large_set_100/
+    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/
     label_file_list:
-    - train_data/val_gt_synth.txt
-    # ratio_list:
-    # - 0.7
-    # - 0.3
+      - synth/large_set_100/train_data/val_gt_synth.txt
+      - real_training/train_data/rec_gt_val.txt
+    ratio_list:
+      - 0.2
+      - 0.8
     transforms:
     - DecodeImage:
         img_mode: BGR
@@ -136,5 +137,5 @@ Eval:
   loader:
     shuffle: false
     drop_last: false
-    batch_size_per_card: 1024
+    batch_size_per_card: 768
     num_workers: 32
