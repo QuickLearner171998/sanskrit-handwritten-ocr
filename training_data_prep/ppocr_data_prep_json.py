@@ -1,5 +1,6 @@
 import os
 import json
+import csv
 from sklearn.model_selection import train_test_split
 from PIL import Image
 from tqdm import tqdm
@@ -52,9 +53,14 @@ def warp_image(image, points):
 
     return warped, M
 
-def transform_and_crop_polygon(image_info):
+def append_to_report(crop_name, issue, report_path):
+    with open(report_path, 'a', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow([crop_name, issue])
+
+def transform_and_crop_polygon(image_info, small_crop_dir, small_area_crop_dir, report_path):
     """Transform polygon points using the homography matrix, crop the image, and apply dilation."""
-    warped, M, points, output_path = image_info
+    warped, M, points, output_path, label = image_info
 
     # Transform the points
     points = np.array(points, dtype="float32")
@@ -83,26 +89,40 @@ def transform_and_crop_polygon(image_info):
     # Crop the transformed image
     cropped_img = warped[min_y:max_y, min_x:max_x]
     
-    min_width = 50  # Minimum width for valid crops
-    min_height = 20  # Minimum height for valid crops
-    min_area = 1000  # Minimum area (width * height) to avoid tiny crops
+    min_width = 5  # Minimum width for valid crops
+    min_height = 30  # Minimum height for valid crops
+    min_area = 100  # Minimum area (width * height) to avoid tiny crops
 
-    if cropped_img.size == 0 or cropped_img.shape[1] < min_width or cropped_img.shape[0] < min_height:
+    if cropped_img.size == 0:
         return
 
-    # Check if the area is too small
+    if cropped_img.shape[1] < min_width or cropped_img.shape[0] < min_height:
+        small_crop_output_path = os.path.join(small_crop_dir, os.path.basename(output_path))
+        cv2.imwrite(small_crop_output_path, cropped_img)
+        with open(small_crop_output_path.replace('.jpg', '.txt'), 'w', encoding='utf-8') as f:
+            f.write(label)
+        append_to_report(os.path.basename(output_path), 'small crop dimensions', report_path)
+        return
+
     if (cropped_img.shape[1] * cropped_img.shape[0]) < min_area:
+        small_area_crop_output_path = os.path.join(small_area_crop_dir, os.path.basename(output_path))
+        cv2.imwrite(small_area_crop_output_path, cropped_img)
+        with open(small_area_crop_output_path.replace('.jpg', '.txt'), 'w', encoding='utf-8') as f:
+            f.write(label)
+        append_to_report(os.path.basename(output_path), 'small area', report_path)
         return
 
     # Save the cropped and straightened image
     cropped_image = Image.fromarray(cropped_img)
     cropped_image.save(output_path)
-
+    with open(output_path.replace('.jpg', '.txt'), 'w', encoding='utf-8') as f:
+        f.write(label)
     return output_path
 
-def process_image(image_info):
+def process_image(data):
+    image_info, small_crop_dir, small_area_crop_dir, report_path = data
     image_path, image_file, polygons, all_crops_dir = image_info
-    image_name = os.path.splitext(image_file)[0]
+    image_name = '--'.join(image_path.split(os.sep)[-3:]).replace('.jpg', '').replace('.png', '')
 
     with Image.open(image_path) as img:
         img = np.array(img.convert('RGB'))
@@ -131,20 +151,22 @@ def process_image(image_info):
                 text_value = polygon['attributes'].get('value')
                 if text_value is None:
                     continue
+                
+                if '\n' in text_value:
+                    print(f"Newline character: {image_file} -- {text_value}")
+                    continue
                 points = [(int(float(x)), int(float(y))) for x, y in [point.split(',') for point in polygon.get('points').split(';')]]
                 # Generate output filename for cropped word image
                 output_filename = os.path.join(all_crops_dir, f'{image_name}_{crop_count:04d}.jpg')
-                if transform_and_crop_polygon((warped, M, points, output_filename)):
+                if transform_and_crop_polygon((warped, M, points, output_filename, text_value), small_crop_dir, small_area_crop_dir, report_path):
                     annotations.append((output_filename, text_value))
                     crop_count += 1
 
     return annotations
 
-def process_annotations(json_path, output_dir):
-    # Directory for saving all cropped images before split
+def process_annotations(json_path, output_dir, small_crop_dir, small_area_crop_dir, report_path):
     all_crops_dir = os.path.join(output_dir, 'all_crops')
     os.makedirs(all_crops_dir, exist_ok=True)
-
 
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
@@ -156,18 +178,17 @@ def process_annotations(json_path, output_dir):
     tasks = []
 
     image_file = data['name']
-    image_path = data['name']
+    image_path = os.path.join(os.path.dirname(json_path), data['name'])  # Ensure the correct path
     polygons = data['annotations']
     tasks.append((image_path, image_file, polygons, all_crops_dir))
 
-    # Using multiprocessing to process images in parallel
+    all_annotations = []
+    
     with Pool(cpu_count()) as pool:
-        all_annotations = list(tqdm(pool.imap_unordered(process_image, tasks), total=len(tasks), desc='Processing images', unit='image'))
+        for result in tqdm(pool.imap_unordered(process_image, [(task, small_crop_dir, small_area_crop_dir, report_path) for task in tasks]), total=len(tasks), desc='Processing images', unit='image'):
+            all_annotations.extend(result)
 
-    # Flattening the list of annotations
-    annotations = [item for sublist in all_annotations for item in sublist]
-
-    return annotations
+    return all_annotations
 
 def split_data(annotations, output_dir):
     train_dir = os.path.join(output_dir, 'train_data', 'train')
@@ -184,8 +205,7 @@ def split_data(annotations, output_dir):
         for image_path, label in train_data:
             # Copy the file to the train directory
             shutil.copy(image_path, train_dir)
-            cos_file_path = os.path.join('train_data', 'train', os.path.basename(image_path))
-            train_f.write(f'{cos_file_path}\t{label}\n')
+            train_f.write(f'{os.path.abspath(image_path)}\t{label}\n')
 
     print(f"Total crops in training: {len(train_data)}")
 
@@ -193,8 +213,7 @@ def split_data(annotations, output_dir):
         for image_path, label in val_data:
             # Copy the file to the validation directory
             shutil.copy(image_path, val_dir)
-            cos_file_path = os.path.join('train_data', 'val', os.path.basename(image_path))
-            val_f.write(f'{cos_file_path}\t{label}\n')
+            val_f.write(f'{os.path.abspath(image_path)}\t{label}\n')
             
     print(f"Total crops in validation: {len(val_data)}")
 
@@ -205,15 +224,26 @@ def main(input_dir, output_dir):
     json_files = [os.path.join(input_dir, json_file) for json_file in os.listdir(input_dir) if json_file.endswith('.json')]
     all_annotations = []
 
+    small_crop_dir = os.path.join(output_dir, 'small_crops')
+    small_area_crop_dir = os.path.join(output_dir, 'small_area_crops')
+    os.makedirs(small_crop_dir, exist_ok=True)
+    os.makedirs(small_area_crop_dir, exist_ok=True)
+
+    report_path = os.path.join(output_dir, 'issue_report.csv')
+    with open(report_path, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(['crop_name', 'issue'])
+
     print("Processing annotations and cropping word images...")
     for json_file in json_files:
-        annotations = process_annotations(json_file, output_dir)
+        annotations = process_annotations(json_file, output_dir, small_crop_dir, small_area_crop_dir, report_path)
         all_annotations.extend(annotations)
     
     print("Splitting data into training and validation sets and saving annotations...")
     split_data(all_annotations, output_dir)
+    print(f"Issue report written to {report_path}")
 
 if __name__ == '__main__':
     input_dir = "/ihub/homedirs/am_cse/pramay/work/annotation/corrections/JSONS/corrected_jsons/"
-    output_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/real_training"
+    output_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/real_training_v1"
     main(input_dir, output_dir)
