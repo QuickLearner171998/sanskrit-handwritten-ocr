@@ -205,7 +205,8 @@ def split_data(annotations, output_dir):
         for image_path, label in train_data:
             # Copy the file to the train directory
             shutil.copy(image_path, train_dir)
-            train_f.write(f'{os.path.abspath(image_path)}\t{label}\n')
+            rel = os.path.relpath(image_path, root_dir)
+            train_f.write(f'{rel}\t{label}\n')
 
     print(f"Total crops in training: {len(train_data)}")
 
@@ -213,7 +214,8 @@ def split_data(annotations, output_dir):
         for image_path, label in val_data:
             # Copy the file to the validation directory
             shutil.copy(image_path, val_dir)
-            val_f.write(f'{os.path.abspath(image_path)}\t{label}\n')
+            rel = os.path.relpath(image_path, root_dir)
+            val_f.write(f'{rel}\t{label}\n')
             
     print(f"Total crops in validation: {len(val_data)}")
 
@@ -246,4 +248,5 @@ def main(input_dir, output_dir):
 if __name__ == '__main__':
     input_dir = "/ihub/homedirs/am_cse/pramay/work/annotation/corrections/JSONS/corrected_jsons/"
     output_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/real_training_v1"
+    root_dir = "/ihub/homedirs/am_cse/pramay/work/Dataset/"
     main(input_dir, output_dir)

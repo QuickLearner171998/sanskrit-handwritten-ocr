@@ -81,7 +81,7 @@ class SimpleDataSet(Dataset):
 
         # Upsample the lines in files with fewer samples than max_lines
         for lines in file_lines:
-            if len(lines) < max_lines:
+            if self.mode == 'train' and len(lines) < max_lines:
                 upsampled_lines = lines * (max_lines // len(lines)) + lines[:max_lines % len(lines)]
                 all_data_lines.extend(upsampled_lines)
                 self.logger.info(f"Upsampling \nBefore: {len(lines)} After: {len(upsampled_lines)}")
@@ -142,7 +142,7 @@ class SimpleDataSet(Dataset):
         return ext_data
 
     def __getitem__(self, idx):
-        if idx >= len(self.data_idx_order_list):
+        if self.mode == 'train' and idx >= len(self.data_idx_order_list):
             idx = idx % len(self.data_idx_order_list)  # Upsampling by cycling through the dataset
         
         file_idx = self.data_idx_order_list[idx]
