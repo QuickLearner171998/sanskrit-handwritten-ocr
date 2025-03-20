@@ -1,25 +1,27 @@
 Global:
   use_gpu: True
-  epoch_num: 72
+  epoch_num: 5000
   log_smooth_window: 20
   print_batch_step: 5
-  save_model_dir: ./output/rec/srn_new
+  save_model_dir: /ihub/homedirs/am_cse/pramay/work/models/r50_srn_25_real_data_IIITH_synth
   save_epoch_step: 3
   # evaluation is run every 5000 iterations after the 4000th iteration
-  eval_batch_step: [0, 5000]
+  eval_batch_step: [20, 50]
   cal_metric_during_train: True
+  calc_epoch_interval: 1
   pretrained_model: 
   checkpoints:
   save_inference_dir:
   use_visualdl: False
   infer_img: doc/imgs_words/ch/word_1.jpg
   # for data or label process
-  character_dict_path:
+  character_dict_path: ppocr/utils/dict/devanagari_dict.txt
   max_text_length: 25
   num_heads: 8
   infer_mode: False
-  use_space_char: False
+  use_space_char: True
   save_res_path: ./output/rec/predicts_srn.txt
+  use_wandb: true
 
 
 Optimizer:
@@ -28,7 +30,7 @@ Optimizer:
   beta2: 0.999
   clip_norm: 10.0
   lr:
-    learning_rate: 0.0001
+    learning_rate: 0.001
 
 Architecture:
   model_type: rec
@@ -58,7 +60,7 @@ Metric:
 Train:
   dataset:
     name: LMDBDataSet
-    data_dir: ./train_data/data_lmdb_release/training/
+    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/real_training_v1/train_data/train_lmdb
     transforms:
       - DecodeImage: # load image
           img_mode: BGR
@@ -76,14 +78,14 @@ Train:
                       'gsrm_slf_attn_bias2'] # dataloader will return list in this order
   loader:
     shuffle: False
-    batch_size_per_card: 64
+    batch_size_per_card: 512
     drop_last: False
-    num_workers: 4
+    num_workers: 32
 
 Eval:
   dataset:
     name: LMDBDataSet
-    data_dir: ./train_data/data_lmdb_release/validation/
+    data_dir: /ihub/homedirs/am_cse/pramay/work/Dataset/real_training_v1/train_data/val_lmdb
     transforms:
       - DecodeImage: # load image
           img_mode: BGR
@@ -102,5 +104,5 @@ Eval:
   loader:
     shuffle: False
     drop_last: False
-    batch_size_per_card: 32
-    num_workers: 4
+    batch_size_per_card: 64
+    num_workers: 32
